@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # == Definition: archive
 #
 # Download and extract an archive.
@@ -18,6 +19,8 @@
 # - *$username: set basic auth username
 # - *$password: set basic auth password
 # - *$proxy: HTTP proxy in the form of "hostname:port"; e.g. "myproxy:8080"
+# - *$owner: No default value.
+# - *$group: No default value.
 #
 # Example usage:
 #
@@ -49,7 +52,10 @@ define archive (
   $allow_insecure = false,
   $username = undef,
   $password = undef,
-  $proxy          = undef ){
+  $proxy          = undef,
+  $owner          = '',
+  $group          = '',
+){
 
   archive::download {"${name}.${extension}":
     ensure         => $ensure,
@@ -73,6 +79,8 @@ define archive (
     root_dir   => $root_dir,
     extension  => $extension,
     timeout    => $timeout,
-    require    => Archive::Download["${name}.${extension}"]
+    require    => Archive::Download["${name}.${extension}"],
+    owner      => $owner,
+    group      => $group,
   }
 }

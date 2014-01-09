@@ -9,6 +9,8 @@
 # - *$root_dir: Default value ''.
 # - *$extension: Default value '.tar.gz'.
 # - *$timeout: Default value 120.
+# - *$owner: No default value.
+# - *$group: No default value.
 #
 # Example usage:
 #
@@ -32,8 +34,9 @@ define archive::extract (
   $src_target = '/usr/src',
   $root_dir   = '',
   $extension  = 'tar.gz',
-  $timeout    = 120) {
-
+  $timeout    = 120,
+  $owner      = '',
+  $group      = '') {
   Exec {
     path => [ '/usr/local/bin', '/usr/bin', '/bin', ],
   }
@@ -47,10 +50,16 @@ define archive::extract (
   case $ensure {
     present: {
 
-      $extract_zip    = "unzip -o ${src_target}/${name}.${extension} -d ${target}"
-      $extract_targz  = "tar --no-same-owner --no-same-permissions -xzf ${src_target}/${name}.${extension} -C ${target}"
-      $extract_tarxz  = "tar --no-same-owner --no-same-permissions -xJf ${src_target}/${name}.${extension} -C ${target}"
-      $extract_tarbz2 = "tar --no-same-owner --no-same-permissions -xjf ${src_target}/${name}.${extension} -C ${target}"
+      if $owner == '' or $group == '' {
+        $chown = ''
+      } else {
+        $chown = " && chown -R $owner:$group ${target}"
+      }
+      
+      $extract_zip    = "unzip -o ${src_target}/${name}.${extension} -d ${target}$chown"
+      $extract_targz  = "tar --no-same-owner --no-same-permissions -xzf ${src_target}/${name}.${extension} -C ${target}$chown"
+      $extract_tarxz  = "tar --no-same-owner --no-same-permissions -xJf ${src_target}/${name}.${extension} -C ${target}$chown"
+      $extract_tarbz2 = "tar --no-same-owner --no-same-permissions -xjf ${src_target}/${name}.${extension} -C ${target}$chown"
 
       $unpack_command = $extension ? {
         'zip'                => "mkdir -p ${target} && ${extract_zip}",
@@ -67,7 +76,7 @@ define archive::extract (
       exec {"Unpack ${name}":
         command => $unpack_command,
         creates => $extract_dir,
-        timeout => $timeout
+        timeout => $timeout,
       }
     }
     absent: {
@@ -76,6 +85,8 @@ define archive::extract (
         recurse => true,
         purge   => true,
         force   => true,
+        owner   => $owner,
+        group   => $group,
       }
     }
     default: { err ( "Unknown ensure value: '${ensure}'" ) }
