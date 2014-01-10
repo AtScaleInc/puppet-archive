@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # == Definition: archive
 #
 # Download and extract an archive.
