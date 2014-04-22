@@ -49,17 +49,18 @@ define archive::extract (
 
   case $ensure {
     present: {
-      $tar_extractor = $extension ? {
-        /(tar.gz|tgz)/       => 'z',
-        /(tar.xz|txz)/       => 'J',
-        /(tar.bz2|tbz|tbz2)/ => 'j',
+      $listing_extractor = $extension ? {
+        /(tar.gz|tgz)/       => 'tar -tzf',
+        /(tar.xz|txz)/       => 'tar -tJf',
+        /(tar.bz2|tbz|tbz2)/ => 'tar -tjf',
+        'zip'                => 'unzip -Z -1',
         default              => '__ERROR__',
       }
 
       if $owner == '' or $group == '' {
         $chown = ''
       } else {
-        $chown = " && tar -t${tar_extractor}f ${src_target}/${name}.${extension} | awk '{print \"$target/\" \$0}' | xargs chown $owner:$group"
+        $chown = " && ${listing_extractor} ${src_target}/${name}.${extension} | awk '{print \"$target/\" \$0}' | xargs chown $owner:$group"
       }
 
       $extract_zip    = "unzip -o ${src_target}/${name}.${extension} -d ${target}$chown"
