@@ -49,13 +49,19 @@ define archive::extract (
 
   case $ensure {
     present: {
+      $tar_extractor = $extension ? {
+        /(tar.gz|tgz)/       => 'z',
+        /(tar.xz|txz)/       => 'J',
+        /(tar.bz2|tbz|tbz2)/ => 'j',
+        default              => '__ERROR__',
+      }
 
       if $owner == '' or $group == '' {
         $chown = ''
       } else {
-        $chown = " && chown -R $owner:$group ${target}"
+        $chown = " && tar -t${tar_extractor}f ${src_target}/${name}.${extension} | awk '{print \"$target/\" \$0}' | xargs chown $owner:$group"
       }
-      
+
       $extract_zip    = "unzip -o ${src_target}/${name}.${extension} -d ${target}$chown"
       $extract_targz  = "tar --no-same-owner --no-same-permissions -xzf ${src_target}/${name}.${extension} -C ${target}$chown"
       $extract_tarxz  = "tar --no-same-owner --no-same-permissions -xJf ${src_target}/${name}.${extension} -C ${target}$chown"
