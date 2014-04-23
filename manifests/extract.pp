@@ -60,7 +60,7 @@ define archive::extract (
       if $owner == '' or $group == '' {
         $chown = ''
       } else {
-        $chown = " && ${listing_extractor} ${src_target}/${name}.${extension} | awk '{print \"$target/\" \$0}' | xargs chown $owner:$group"
+        $chown = " && ${listing_extractor} ${src_target}/${name}.${extension} | awk '{print \"$target/\\\"\" \$0 \"\\\"\"}' | xargs chown $owner:$group"
       }
 
       $extract_zip    = "unzip -o ${src_target}/${name}.${extension} -d ${target}$chown"
