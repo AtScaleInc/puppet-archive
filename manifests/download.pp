@@ -145,21 +145,28 @@ define archive::download (
         default => undef,
       }
 
-      exec {"download archive ${name} and check sum":
-        command     => "curl ${basic_auth} -L -s ${insecure_arg} ${proxy_arg} -o ${src_target}/${name} ${url}",
-        creates     => "${src_target}/${name}",
-        logoutput   => true,
-        timeout     => $timeout,
-        require     => Package['curl'],
-        notify      => $notify,
-        refreshonly => $refreshonly,
-      }
+      if $url =~ /^puppet:./ {
+        file{"${src_target}/${name}":
+          ensure  => present,
+          source  => "${url}"
+        }
+      } else {
+        exec {"download archive ${name} and check sum":
+          command     => "curl ${basic_auth} -L -s ${insecure_arg} ${proxy_arg} -o ${src_target}/${name} ${url}",
+          creates     => "${src_target}/${name}",
+          logoutput   => true,
+          timeout     => $timeout,
+          require     => Package['curl'],
+          notify      => $notify,
+          refreshonly => $refreshonly,
+        }
 
-      exec {"rm-on-error-${name}":
-        command     => "rm -f ${src_target}/${name} ${src_target}/${name}.${digest_type} && exit 1",
-        unless      => $checksum_cmd,
-        cwd         => $src_target,
-        refreshonly => true,
+        exec {"rm-on-error-${name}":
+          command     => "rm -f ${src_target}/${name} ${src_target}/${name}.${digest_type} && exit 1",
+          unless      => $checksum_cmd,
+          cwd         => $src_target,
+          refreshonly => true,
+        }
       }
     }
     absent: {
